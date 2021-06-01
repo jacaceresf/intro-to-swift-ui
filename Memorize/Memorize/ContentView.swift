@@ -9,88 +9,58 @@ import SwiftUI
 
 struct ContentView: View {
     
-    var emojis = ["🚗", "🚕", "🚙", "🚌", "🚎", "🚑", "🏎", "🚓", "🛻", "🚂", "🚠", "🛬", "✈️", "🛩", "🛳", "🛴", "🦼", "🚲","🚄","🚡","🚖","🚍","🚔","🏍"]
-    
-    @State var emojiCount: Int = 4
+    // it means that it going to rebuild the entire view when a change occurs
+    @ObservedObject var viewModel: EmojiMemoryGame
     
     //a function with no name and it doesn't take parameters
     var body: some View {
-        VStack{
-            ScrollView {
-                //horizontal stack
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))]) {
-                    //foreach with range
-                    ForEach(emojis[0..<emojiCount], id: \.self) { emoji in
-                        CardView(content: emoji)
-                            .aspectRatio(2/3, contentMode: .fit)
-                    }
+        ScrollView {
+            //horizontal stack
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))]) {
+                //foreach with range
+                ForEach(viewModel.cards) { card in
+                    CardView(card: card)
+                        .aspectRatio(2/3, contentMode: .fit)
+                        .onTapGesture {
+                            //asking view model to express the intent of user
+                            viewModel.choose(card)
+                        }
                 }
             }
-            .foregroundColor(.red)
-            Spacer(minLength: 20)
-            HStack {
-                remove
-                Spacer()
-                add
-            }
-            .font(.largeTitle)
-            .padding(.horizontal)
-            
         }
+        .foregroundColor(.red)
         .padding(.horizontal)
     }
-    
-    var remove: some View {
-        Button {
-            if emojiCount > 1 {
-                emojiCount -= 1
-            }
-        } label: {
-            Image(systemName: "minus.rectangle.fill")
-        }
-    }
-    
-    var add: some View {
-        Button {
-            if emojiCount < emojis.count {
-                emojiCount += 1
-            }
-        } label: {
-            Image(systemName: "plus.rectangle.fill")
-        }
-    }
-    
 }
 
 //views are inmmutable, so the OS render many views when to show a change
 struct CardView: View {
     
-    var content: String
-    // variables always have to have a value
-    @State var isFaceUp: Bool = false
+    //it is just a read only struct
+    let card: MemoryGame<String>.Card
     
     var body : some View {
         ZStack {
             //define local variable
             // let when we're defining a variable that will be a constat
             let shape = RoundedRectangle(cornerRadius: 20)
-            if isFaceUp {
+            if card.isFaceUp {
                 shape.fill().foregroundColor(.white)
                 shape.strokeBorder(lineWidth: 5)
-                Text(content).font(.largeTitle)
+                Text(card.content).font(.largeTitle)
             } else {
                 shape.fill()
             }
-        }.onTapGesture{
-            isFaceUp = !isFaceUp
         }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+
+        let game = EmojiMemoryGame()
+        ContentView(viewModel: game)
             .preferredColorScheme(.dark)
-        ContentView()
+        ContentView(viewModel: game)
     }
 }
